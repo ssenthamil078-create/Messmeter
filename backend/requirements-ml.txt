@@ -1,0 +1,4 @@
+# Forecasting dependencies, installed in Week 5 (kept separate so the base setup stays light)
+pandas
+scikit-learn
+xgboost

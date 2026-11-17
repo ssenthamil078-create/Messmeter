@@ -1,0 +1,16 @@
+# Local PostgreSQL for development: docker compose up -d db
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-messmeter}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-messmeter}
+      POSTGRES_DB: ${POSTGRES_DB:-messmeter}
+    ports:
+      - "5432:5432"
+    volumes:
+      - messmeter_pgdata:/var/lib/postgresql/data
+
+volumes:
+  messmeter_pgdata:
