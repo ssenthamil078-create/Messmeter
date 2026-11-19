@@ -5,21 +5,64 @@ Students tap **Eating** or **Skipping** before each meal; the kitchen sees a hea
 
 Built for the UNAI TECH Virtual Internship Program 2026 (domain: Web Development).
 
+## Architecture
+
+![Architecture diagram](docs/images/architecture.png)
+
+A React frontend calls a FastAPI backend (REST, plus WebSocket for live counts) that stores data in PostgreSQL.
+Full module descriptions, inputs / processes / outputs and the development order are in
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+## Modules
+
+| Module | Responsibility |
+| --- | --- |
+| Data layer | Database connection, tables, request / response validation |
+| Authentication and roles | Login, JWT, student / staff / admin access |
+| Meals and menu management | Meals, dishes, cut-off times, portion sizes (admin) |
+| Check-in | Students mark Eating / Skipping before the cut-off |
+| Live kitchen dashboard | Real-time responded, eating and predicted counts |
+| Notifications and scheduling | Reminders; runs the forecast at the cut-off |
+| Forecast | Predicted headcount with a range (baseline, then XGBoost) |
+| Portion planner | Headcount to kg / litres per dish |
+| Leftovers and feedback | Cooked vs left quantities, meal ratings |
+| Reports | Weekly waste, cost and forecast accuracy |
+| Shared frontend | Navigation, reusable components, API client, styles |
+
 ## Project structure
 
 ```
 messmeter/
-├── backend/            FastAPI server (Python)
-│   ├── app/            application code (api, models, schemas, services)
-│   ├── tests/          pytest tests
+├── backend/                 FastAPI server (Python)
+│   ├── app/
+│   │   ├── api/             routers: auth, meals, checkins, forecast, leftovers, reports, live, health
+│   │   ├── models/          SQLAlchemy tables: user, meal, checkin, leftover, forecast
+│   │   ├── schemas/         Pydantic request / response shapes
+│   │   ├── services/        business logic: forecast, portion_planner, report_builder, notifier
+│   │   ├── config.py        settings read from .env
+│   │   ├── database.py      engine, session, Base
+│   │   ├── security.py      password hashing and JWT
+│   │   ├── scheduler.py     timed jobs
+│   │   └── main.py          app creation and router registration
+│   ├── tests/               pytest tests
 │   └── requirements.txt
-├── frontend/           React + Vite + Tailwind CSS web app
-├── ml/                 forecasting experiments (Week 5)
-├── scripts/            helper scripts (e.g. simulated data generator)
-├── docs/planning/      Day 2-4 planning documents (idea, blueprint, development plan)
-├── docker-compose.yml  local PostgreSQL
-└── .env.example        template for environment variables
+├── frontend/                React + Vite + Tailwind CSS
+│   └── src/
+│       ├── pages/           one file per screen (Student, Kitchen, Admin, Reports, Login, Home)
+│       ├── components/      reusable UI: NavBar, PageHeader, StatusCard
+│       ├── api/             client.js, the fetch wrapper for the backend
+│       ├── assets/          logo
+│       ├── App.jsx          routes (navigation)
+│       └── index.css        Tailwind styles
+├── ml/                      forecasting experiments (Week 5)
+├── scripts/                 helper scripts such as the simulated data generator
+├── docs/                    architecture, setup report, Git workflow, planning documents
+├── docker-compose.yml       local PostgreSQL
+└── .env.example             template for environment variables
 ```
+
+Files in `backend/app/api`, `models`, `schemas` and `services` that are not built yet contain a short description of
+their responsibility and the week they are planned for.
 
 ## Prerequisites
 
@@ -47,7 +90,8 @@ npm run dev
 docker compose up -d db
 ```
 
-The frontend proxies `/api` requests to the backend, so the home page shows the backend status when both are running.
+The frontend proxies `/api` requests to the backend. The home page shows the backend status, and the navigation bar
+links to the Student, Kitchen, Admin, Reports and Login pages.
 
 ## Run tests
 
@@ -57,14 +101,11 @@ source .venv/bin/activate
 pytest
 ```
 
-## Planned features
-
-Role-based login, one-tap meal check-in, live kitchen dashboard, headcount forecast, portion planner, leftover logging
-and reports. See `docs/planning/` for the full blueprint and development plan.
-
 ## Status
 
-Phase 1, Day 1: development environment and project skeleton set up. Backend health endpoint and frontend starter page
-are working.
+- **Phase 1, Day 1:** development environment and project skeleton.
+- **Phase 1, Day 2:** Git and GitHub workflow ([`docs/GIT_WORKFLOW.md`](docs/GIT_WORKFLOW.md)).
+- **Phase 1, Day 3:** project structure, module breakdown and architecture diagram. Frontend pages and navigation are in
+  place; backend modules are laid out and will be filled in week by week.
 
-Phase 1, Day 2: Git and GitHub workflow documented in `docs/GIT_WORKFLOW.md` (commit message style, daily routine, rules).
+See `docs/planning/` for the blueprint and the 6-week development plan.
