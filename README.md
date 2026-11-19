@@ -66,3 +66,5 @@ and reports. See `docs/planning/` for the full blueprint and development plan.
 
 Phase 1, Day 1: development environment and project skeleton set up. Backend health endpoint and frontend starter page
 are working.
+
+Phase 1, Day 2: Git and GitHub workflow documented in `docs/GIT_WORKFLOW.md` (commit message style, daily routine, rules).
