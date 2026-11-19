@@ -29,6 +29,19 @@ Full module descriptions, inputs / processes / outputs and the development order
 | Reports | Weekly waste, cost and forecast accuracy |
 | Shared frontend | Navigation, reusable components, API client, styles |
 
+## Requirements and priorities
+
+The full requirements (functional, non-functional and user requirements), feature and module breakdown, and the
+51-task development list are in [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md). Features are prioritised as follows:
+
+| Priority | Features |
+| --- | --- |
+| **Must Have** | Login and roles, meal and menu management, one-tap check-in, kitchen dashboard, headcount forecast, portion plan, leftover logging |
+| **Should Have** | Weekly reports, meal reminders, meal rating, live dashboard updates (WebSocket), installable web app, ML forecast upgrade |
+| **Could Have** | Points for regular responders, menu popularity insights, offline check-in queue, CSV export, dark mode |
+
+![Module dependencies](docs/images/module-dependencies.png)
+
 ## Project structure
 
 ```
@@ -107,5 +120,8 @@ pytest
 - **Phase 1, Day 2:** Git and GitHub workflow ([`docs/GIT_WORKFLOW.md`](docs/GIT_WORKFLOW.md)).
 - **Phase 1, Day 3:** project structure, module breakdown and architecture diagram. Frontend pages and navigation are in
   place; backend modules are laid out and will be filled in week by week.
+
+- **Phase 1, Day 4:** requirements analysis, feature and module breakdown, priorities and task list
+  ([`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md)).
 
 See `docs/planning/` for the blueprint and the 6-week development plan.
