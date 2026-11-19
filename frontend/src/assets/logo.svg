@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="MessMeter logo">
+  <rect width="64" height="64" rx="14" fill="#1F5C4A"/>
+  <path d="M14 34h36a18 18 0 0 1-36 0z" fill="#ffffff"/>
+  <path d="M24 12c-3 4 3 6 0 10M32 10c-3 4 3 6 0 10M40 12c-3 4 3 6 0 10" fill="none" stroke="#B5C9C0" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
