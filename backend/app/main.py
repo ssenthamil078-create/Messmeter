@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api import health
 from app.config import settings
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
@@ -13,8 +14,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.get("/api/health")
-def health() -> dict:
-    """Simple check used by the frontend and by deployment health checks."""
-    return {"status": "ok", "service": settings.app_name, "environment": settings.app_env}
+# Every router is registered here; more are added as each module is built.
+app.include_router(health.router, prefix="/api")
