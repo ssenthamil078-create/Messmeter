@@ -20,7 +20,7 @@ live counts), and the backend stores data in **PostgreSQL**.
 | # | Module | Where it lives | Responsibility | Built |
 | --- | --- | --- | --- | --- |
 | 1 | Data layer | `backend/app/database.py`, `models/`, `schemas/` | Database connection and sessions, table definitions, request / response validation | Week 1 (T2) |
-| 2 | Authentication and roles | `api/auth.py`, `api/deps.py`, `security.py`; `LoginPage` | Login, password hashing, JWT, student / staff / admin access rules | Week 2 (T6), Week 3 (T10) |
+| 2 | Authentication and roles | `api/auth.py`, `api/users.py`, `api/deps.py`, `security.py`; `LoginPage`, `context/`, `ProtectedRoute` | Login, password hashing, JWT, student / staff / admin access rules | Done (Day 5) |
 | 3 | Meals and menu management | `api/meals.py`, `models/meal.py`; `AdminPage` | Admin creates meals, dishes, cut-off times and portion sizes | Week 2 (T7), Week 4 (T15) |
 | 4 | Check-in | `api/checkins.py`, `models/checkin.py`; `StudentPage` | Students submit or change Eating / Skipping before the cut-off | Week 2 (T8), Week 3 (T11) |
 | 5 | Live kitchen dashboard | `api/live.py`; `KitchenPage` | Shows responded, eating and predicted counts in real time | Week 4 (T14, T16) |

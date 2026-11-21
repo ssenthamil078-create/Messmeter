@@ -48,13 +48,13 @@ The full requirements (functional, non-functional and user requirements), featur
 messmeter/
 ├── backend/                 FastAPI server (Python)
 │   ├── app/
-│   │   ├── api/             routers: auth, meals, checkins, forecast, leftovers, reports, live, health
+│   │   ├── api/             routers: auth, users, meals, checkins, forecast, leftovers, reports, live, health
 │   │   ├── models/          SQLAlchemy tables: user, meal, checkin, leftover, forecast
 │   │   ├── schemas/         Pydantic request / response shapes
 │   │   ├── services/        business logic: forecast, portion_planner, report_builder, notifier
 │   │   ├── config.py        settings read from .env
 │   │   ├── database.py      engine, session, Base
-│   │   ├── security.py      password hashing and JWT
+│   │   ├── security.py      password hashing (bcrypt) and JWT
 │   │   ├── scheduler.py     timed jobs
 │   │   └── main.py          app creation and router registration
 │   ├── tests/               pytest tests
@@ -62,13 +62,14 @@ messmeter/
 ├── frontend/                React + Vite + Tailwind CSS
 │   └── src/
 │       ├── pages/           one file per screen (Student, Kitchen, Admin, Reports, Login, Home)
-│       ├── components/      reusable UI: NavBar, PageHeader, StatusCard
+│       ├── components/      reusable UI: NavBar, PageHeader, StatusCard, ProtectedRoute
+│       ├── context/         AuthProvider and useAuth (who is logged in)
 │       ├── api/             client.js, the fetch wrapper for the backend
 │       ├── assets/          logo
 │       ├── App.jsx          routes (navigation)
 │       └── index.css        Tailwind styles
 ├── ml/                      forecasting experiments (Week 5)
-├── scripts/                 helper scripts such as the simulated data generator
+├── scripts/                 seed_users.py (demo accounts); simulated data generator later
 ├── docs/                    architecture, setup report, Git workflow, planning documents
 ├── docker-compose.yml       local PostgreSQL
 └── .env.example             template for environment variables
@@ -99,8 +100,11 @@ cd frontend
 npm install
 npm run dev
 
-# 4. Database (optional for now) - in a third terminal
+# 4. Database - in a third terminal (the API needs it for login)
 docker compose up -d db
+
+# 5. Demo accounts (prints a random password for each, once)
+python scripts/seed_users.py
 ```
 
 The frontend proxies `/api` requests to the backend. The home page shows the backend status, and the navigation bar
@@ -125,3 +129,6 @@ pytest
   ([`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md)).
 
 See `docs/planning/` for the blueprint and the 6-week development plan.
+- **Phase 1, Day 5:** first working module, **Authentication and roles** (M2): JWT login, student / staff / admin access
+  rules, protected pages and an admin user-management screen. 33 backend tests. Details in
+  [`docs/MODULE_AUTH.md`](docs/MODULE_AUTH.md).
