@@ -1,10 +1,30 @@
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import OperationalError
 
-from app.api import health
+from app import models  # noqa: F401  (registers all tables on Base.metadata)
+from app.api import auth, health, users
 from app.config import settings
+from app.database import Base, engine
 
-app = FastAPI(title=settings.app_name, version="0.1.0")
+logger = logging.getLogger("messmeter")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    settings.check_secret_key()
+    try:
+        # Simple table creation for now; Alembic migrations replace this later (task DB-2).
+        Base.metadata.create_all(bind=engine)
+    except OperationalError:
+        logger.warning("Database is not reachable; starting without it. Start PostgreSQL (docker compose up -d db).")
+    yield
+
+
+app = FastAPI(title=settings.app_name, version="0.2.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -16,3 +36,5 @@ app.add_middleware(
 
 # Every router is registered here; more are added as each module is built.
 app.include_router(health.router, prefix="/api")
+app.include_router(auth.router, prefix="/api")
+app.include_router(users.router, prefix="/api")
