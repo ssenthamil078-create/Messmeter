@@ -19,9 +19,9 @@ from app.models.user import Role, User  # noqa: E402
 from app.security import hash_password  # noqa: E402
 
 DEMO_USERS = [
-    ("Mess Admin", "admin@messmeter.local", Role.admin),
-    ("Kitchen Staff", "staff@messmeter.local", Role.staff),
-    ("Demo Student", "student@messmeter.local", Role.student),
+    ("Mess Admin", "admin@example.com", Role.admin),
+    ("Kitchen Staff", "staff@example.com", Role.staff),
+    ("Demo Student", "student@example.com", Role.student),
 ]
 
 

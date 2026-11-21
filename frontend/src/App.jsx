@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import NavBar from './components/NavBar'
+import ProtectedRoute from './components/ProtectedRoute'
 import AdminPage from './pages/AdminPage'
 import HomePage from './pages/HomePage'
 import KitchenPage from './pages/KitchenPage'
@@ -16,9 +17,30 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/student" element={<StudentPage />} />
-          <Route path="/kitchen" element={<KitchenPage />} />
-          <Route path="/admin" element={<AdminPage />} />
+          <Route
+            path="/student"
+            element={
+              <ProtectedRoute roles={['student']}>
+                <StudentPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/kitchen"
+            element={
+              <ProtectedRoute roles={['staff', 'admin']}>
+                <KitchenPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute roles={['admin']}>
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
