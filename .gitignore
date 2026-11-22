@@ -15,8 +15,11 @@ dist/
 
 # Data and models generated locally
 *.sqlite3
+*.db
 *.pkl
 *.joblib
+.pytest_lib/
+*.html
 
 # Editor / OS
 .vscode/

@@ -6,7 +6,15 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import settings
 
-engine = create_engine(settings.database_url, pool_pre_ping=True)
+import os
+
+db_url = settings.database_url
+# Default to SQLite for seamless local development and automated testing
+if (not os.getenv("DATABASE_URL") and db_url.startswith("postgresql")) or "sqlite" in db_url:
+    db_url = "sqlite:///./messmeter.db"
+
+connect_args = {"check_same_thread": False} if "sqlite" in db_url else {}
+engine = create_engine(db_url, connect_args=connect_args)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 

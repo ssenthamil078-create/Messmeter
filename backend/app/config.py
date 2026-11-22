@@ -1,4 +1,20 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+import os
+
+try:
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+except ImportError:
+    from pydantic import BaseModel
+
+    class BaseSettings(BaseModel):  # type: ignore[no-redef]
+        def __init__(self, **values):
+            super().__init__(**values)
+            for field in self.__class__.model_fields:
+                val = os.getenv(field.upper()) or os.getenv(field)
+                if val is not None:
+                    setattr(self, field, val)
+
+    def SettingsConfigDict(**kwargs):  # type: ignore[no-redef]
+        return kwargs
 
 
 class Settings(BaseSettings):
