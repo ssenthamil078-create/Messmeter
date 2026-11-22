@@ -5,7 +5,7 @@ import { useAuth } from '../context/useAuth'
 // `roles` omitted = visible to everyone, including signed-out visitors.
 const links = [
   { to: '/', label: 'Home' },
-  { to: '/student', label: 'Student', roles: ['student'] },
+  { to: '/student', label: 'Student Check-in', roles: ['student', 'admin'] },
   { to: '/kitchen', label: 'Kitchen', roles: ['staff', 'admin'] },
   { to: '/admin', label: 'Admin', roles: ['admin'] },
   { to: '/reports', label: 'Reports' },

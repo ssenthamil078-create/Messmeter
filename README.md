@@ -115,7 +115,10 @@ links to the Student, Kitchen, Admin, Reports and Login pages.
 ```bash
 cd backend
 source .venv/bin/activate
+# Standard pytest suite
 pytest
+# Or standalone zero-dependency test runner:
+python run_tests.py
 ```
 
 ## Status
@@ -124,11 +127,14 @@ pytest
 - **Phase 1, Day 2:** Git and GitHub workflow ([`docs/GIT_WORKFLOW.md`](docs/GIT_WORKFLOW.md)).
 - **Phase 1, Day 3:** project structure, module breakdown and architecture diagram. Frontend pages and navigation are in
   place; backend modules are laid out and will be filled in week by week.
-
 - **Phase 1, Day 4:** requirements analysis, feature and module breakdown, priorities and task list
   ([`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md)).
-
 See `docs/planning/` for the blueprint and the 6-week development plan.
 - **Phase 1, Day 5:** first working module, **Authentication and roles** (M2): JWT login, student / staff / admin access
-  rules, protected pages and an admin user-management screen. 33 backend tests. Details in
+  rules, protected pages and an admin user-management screen. Details in
   [`docs/MODULE_AUTH.md`](docs/MODULE_AUTH.md).
+- **Phase 1, Day 6:** feature development and integration, **Meal & Menu Management** (M3) and **Student Check-in** (M4):
+  admin scheduling of meals with menu dishes, portion sizes per student, and cut-off deadlines; student one-tap Eating /
+  Skipping check-in with live status badges and deadline enforcement; review and bug fixes for Day 5 implementation
+  (null pointer safety, live user search, and tabbed dashboard). 25 automated tests. Details in
+  [`docs/MODULE_MEALS_CHECKIN.md`](docs/MODULE_MEALS_CHECKIN.md).

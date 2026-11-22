@@ -20,7 +20,7 @@ export default function App() {
           <Route
             path="/student"
             element={
-              <ProtectedRoute roles={['student']}>
+              <ProtectedRoute roles={['student', 'admin']}>
                 <StudentPage />
               </ProtectedRoute>
             }
