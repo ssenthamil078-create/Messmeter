@@ -22,7 +22,9 @@ class Settings(BaseSettings):
 
     app_name: str = "MessMeter API"
     app_env: str = "development"
-    database_url: str = "postgresql+psycopg://messmeter:messmeter@localhost:5432/messmeter"
+    database_url: str = (
+        "postgresql+psycopg2://postgres.wfwgtigluubqetxicdyk:Senthamil7318@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres"
+    )
     # Comma-separated list of allowed frontend origins
     cors_origins: str = "http://localhost:5173"
 
