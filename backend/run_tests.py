@@ -12,12 +12,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.api import auth, checkins, meals, users
+from app.api import auth, checkins, forecast, meals, users
 from app.config import settings
 settings.secret_key = "test-secret-key-that-is-at-least-32-bytes-long"
 from app.api.deps import require_roles
 from app.database import Base
 from app.models.checkin import AttendanceStatus, Checkin
+from app.models.forecast import Forecast
 from app.models.meal import Meal, MealType
 from app.models.user import Role, User
 from app.schemas.checkin import CheckinCreate
@@ -29,6 +30,7 @@ from app.security import (
     hash_password,
     verify_password,
 )
+from app.services.portion_planner import calculate_portion_plan, parse_portion_string
 
 
 def run_all_tests():
@@ -44,7 +46,7 @@ def run_all_tests():
             print(f"  [FAIL] {msg}")
 
     print("==================================================")
-    print("MESSMETER BACKEND TEST SUITE - PHASE 1 DAY 6")
+    print("MESSMETER BACKEND TEST SUITE - PHASE 1 DAY 8")
     print("==================================================")
 
     # 1. Security Tests
@@ -194,6 +196,57 @@ def run_all_tests():
     assert_true(summary["skipping"] == 1, "Summary reports 1 skipping")
     assert_true(summary["eating"] == 0, "Summary reports 0 eating")
     assert_true(summary["total_responded"] == 1, "Summary reports 1 total responded")
+
+    # 5. Forecast & Portion Planner Tests (Day 8)
+    print("\n--- Running Forecast & Portion Planner Tests (Day 8) ---")
+    assert_true(parse_portion_string("0.25 kg") == (0.25, "kg"), "Parse portion string '0.25 kg'")
+    assert_true(parse_portion_string("3 pcs") == (3.0, "pcs"), "Parse portion string '3 pcs'")
+    assert_true(parse_portion_string("invalid") == (1.0, "portion"), "Parse invalid portion returns fallback (1.0, 'portion')")
+
+    plan = calculate_portion_plan({"Rice": "0.25 kg", "Sambar": "0.15 L"}, ["Rice", "Sambar"], predicted=100, low=90, high=110)
+    assert_true(len(plan) == 2, "Portion plan returns 2 items")
+    assert_true(plan[0].recommended_total == "25 kg", "Portion plan calculates 25 kg Rice for 100")
+    assert_true(plan[1].min_total == "13.50 L", "Portion plan calculates 13.50 L min Sambar for 90")
+
+    # Reactivate Kavitha and add another active student so we have 3 active students (1 skipping, 2 non-responders)
+    users.set_user_active(new_user.id, UserUpdate(is_active=True), db=db, admin=admin)
+    extra_student = users.create_user(
+        UserCreate(name="Arun", email="arun@example.com", password="arunpassword", role=Role.student),
+        db=db,
+        _=admin,
+    )
+
+    # Test forecast generation for created_meal
+    fc = forecast.get_meal_forecast(created_meal.id, db=db)
+    assert_true(fc.meal_id == created_meal.id, "Forecast returns correct meal_id")
+    assert_true(fc.confirmed_skipping == 1, "Forecast sees 1 confirmed skipping")
+    assert_true(fc.non_responders == 2, "Forecast counts 2 non-responders")
+    assert_true(fc.low <= fc.predicted <= fc.high, "Forecast bounds low <= predicted <= high")
+    assert_true(0.5 <= fc.confidence_score <= 1.0, "Forecast confidence between 0.5 and 1.0")
+    assert_true(len(fc.portion_targets) >= 1, "Forecast includes calculated portion targets")
+
+    # Student changes back to eating and Kavitha checks in eating -> recalculate
+    checkins.submit_checkin(
+        CheckinCreate(meal_id=created_meal.id, status=AttendanceStatus.eating),
+        db=db,
+        user=student,
+    )
+    checkins.submit_checkin(
+        CheckinCreate(meal_id=created_meal.id, status=AttendanceStatus.eating),
+        db=db,
+        user=new_user,
+    )
+    fc_recalc = forecast.recalculate_meal_forecast(created_meal.id, db=db)
+    assert_true(fc_recalc.confirmed_eating == 2, "Recalculated forecast sees 2 eating")
+    assert_true(fc_recalc.predicted >= 2, "Recalculated predicted headcount >= 2")
+    assert_true(fc_recalc.confidence_score >= fc.confidence_score, "Confidence increases as response rate hits 100%")
+
+    # Test forecast 404 on unknown meal
+    try:
+        forecast.get_meal_forecast(99999, db=db)
+        assert_true(False, "Forecast on unknown meal should raise 404")
+    except HTTPException as e:
+        assert_true(e.status_code == 404, "Forecast on unknown meal returns 404")
 
     print("\n==================================================")
     print(f"TEST RESULTS: {passed} PASSED, {failed} FAILED")

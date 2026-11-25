@@ -142,3 +142,8 @@ See `docs/planning/` for the blueprint and the 6-week development plan.
   verified 25 automated unit and integration tests (100% pass rate), documented demonstration video script and live
   feature walkthrough, and prepared the Phase 2 / Week 2 development roadmap (headcount forecasting, automated cut-off
   schedulers, and portion planning). Details in [`docs/WEEK1_REVIEW.md`](docs/WEEK1_REVIEW.md).
+- **Phase 1, Day 8:** advanced functionality development and integration, **Headcount Forecasting Engine** (M7) and
+  **Automated Portion Planner** (M8): implemented non-responder turnout estimation with weekday/weekend and historical
+  priors, confidence scoring, batch portion target calculation (`kg`, `L`, `pcs`), `GET/POST /api/forecast/{meal_id}`
+  endpoints, and live Kitchen Operations Dashboard UI integration with one-click forecast recalculation. Verified with
+  41 automated tests (100% pass rate). Details in [`docs/MODULE_FORECAST_PORTION.md`](docs/MODULE_FORECAST_PORTION.md).
