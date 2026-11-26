@@ -147,3 +147,8 @@ See `docs/planning/` for the blueprint and the 6-week development plan.
   priors, confidence scoring, batch portion target calculation (`kg`, `L`, `pcs`), `GET/POST /api/forecast/{meal_id}`
   endpoints, and live Kitchen Operations Dashboard UI integration with one-click forecast recalculation. Verified with
   41 automated tests (100% pass rate). Details in [`docs/MODULE_FORECAST_PORTION.md`](docs/MODULE_FORECAST_PORTION.md).
+- **Phase 1, Day 9:** database design and integration: completed the 5-table relational schema (`users`, `meals`,
+  `checkins`, `forecasts`, `leftovers`) with foreign-key constraints and ER documentation, implemented full CRUD
+  endpoints for `leftovers` (`/api/leftovers`) and meal updates (`PATCH /api/meals/{meal_id}`), added live `SELECT 1`
+  database connectivity verification to `GET /api/health`, and verified with 49 automated tests (100% pass rate).
+  Details in [`docs/DATABASE.md`](docs/DATABASE.md).

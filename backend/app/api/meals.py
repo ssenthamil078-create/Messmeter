@@ -11,7 +11,7 @@ from app.database import get_db
 from app.models.checkin import Checkin
 from app.models.meal import Meal, MealType
 from app.models.user import Role, User
-from app.schemas.meal import MealCreate, MealOut, MealWithCheckin
+from app.schemas.meal import MealCreate, MealOut, MealUpdate, MealWithCheckin
 
 router = APIRouter(prefix="/meals", tags=["meals"])
 admin_only = require_roles(Role.admin)
@@ -103,6 +103,33 @@ def get_meal(meal_id: int, db: Session = Depends(get_db), _: User = Depends(get_
     meal = db.get(Meal, meal_id)
     if meal is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Meal not found")
+    return MealOut.from_model(meal)
+
+
+@router.patch("/{meal_id}", response_model=MealOut)
+def update_meal(
+    meal_id: int,
+    data: MealUpdate,
+    db: Session = Depends(get_db),
+    _: User = Depends(admin_only),
+) -> MealOut:
+    """Update an existing meal's dishes, portion sizes, or cut-off time (admin only)."""
+    meal = db.get(Meal, meal_id)
+    if meal is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Meal not found")
+
+    if data.dishes is not None:
+        meal.menu_items = json.dumps(data.dishes)
+    if data.portion_sizes is not None:
+        meal.portion_sizes = json.dumps(data.portion_sizes)
+    if data.cutoff_time is not None:
+        cutoff = data.cutoff_time
+        if cutoff.tzinfo is None:
+            cutoff = cutoff.replace(tzinfo=timezone.utc)
+        meal.cutoff_time = cutoff
+
+    db.commit()
+    db.refresh(meal)
     return MealOut.from_model(meal)
 
 

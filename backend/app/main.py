@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import OperationalError
 
 from app import models  # noqa: F401  (registers all tables on Base.metadata)
-from app.api import auth, checkins, forecast, health, meals, users
+from app.api import auth, checkins, forecast, health, leftovers, meals, users
 from app.config import settings
 from app.database import Base, engine
 
@@ -41,3 +41,4 @@ app.include_router(users.router, prefix="/api")
 app.include_router(meals.router, prefix="/api")
 app.include_router(checkins.router, prefix="/api")
 app.include_router(forecast.router, prefix="/api")
+app.include_router(leftovers.router, prefix="/api")

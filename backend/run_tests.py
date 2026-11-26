@@ -12,17 +12,19 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.api import auth, checkins, forecast, meals, users
+from app.api import auth, checkins, forecast, health, leftovers, meals, users
 from app.config import settings
 settings.secret_key = "test-secret-key-that-is-at-least-32-bytes-long"
 from app.api.deps import require_roles
 from app.database import Base
 from app.models.checkin import AttendanceStatus, Checkin
 from app.models.forecast import Forecast
+from app.models.leftover import Leftover
 from app.models.meal import Meal, MealType
 from app.models.user import Role, User
 from app.schemas.checkin import CheckinCreate
-from app.schemas.meal import MealCreate
+from app.schemas.leftover import LeftoverCreate, LeftoverUpdate
+from app.schemas.meal import MealCreate, MealUpdate
 from app.schemas.user import LoginRequest, UserCreate, UserUpdate
 from app.security import (
     create_access_token,
@@ -46,7 +48,7 @@ def run_all_tests():
             print(f"  [FAIL] {msg}")
 
     print("==================================================")
-    print("MESSMETER BACKEND TEST SUITE - PHASE 1 DAY 8")
+    print("MESSMETER BACKEND TEST SUITE - PHASE 1 DAY 9")
     print("==================================================")
 
     # 1. Security Tests
@@ -247,6 +249,61 @@ def run_all_tests():
         assert_true(False, "Forecast on unknown meal should raise 404")
     except HTTPException as e:
         assert_true(e.status_code == 404, "Forecast on unknown meal returns 404")
+
+    # 6. Database Connectivity & Full CRUD Tests (Day 9)
+    print("\n--- Running Database Connectivity & Full CRUD Tests (Day 9) ---")
+    health_res = health.health(db=db)
+    assert_true(health_res["status"] == "ok" and health_res["database"] == "connected", "Health check verifies live DB SELECT 1")
+    assert_true(health_res["dialect"] == "sqlite", "Health check reports active SQLAlchemy dialect")
+
+    # Meal Update (PATCH)
+    updated_meal = meals.update_meal(
+        created_meal.id,
+        MealUpdate(dishes=["Paneer Biryani", "Mirchi Ka Salan", "Raita", "Gulab Jamun", "Papad"]),
+        db=db,
+        _=admin,
+    )
+    assert_true(len(updated_meal.dishes) == 5, "Admin updates meal dishes via PATCH")
+
+    # Leftover Create
+    lo_created = leftovers.create_leftover(
+        LeftoverCreate(
+            meal_id=created_meal.id,
+            dish="Paneer Biryani",
+            qty_cooked=35.0,
+            qty_left=3.2,
+            unit="kg",
+            notes="Day 9 DB CRUD verification",
+        ),
+        db=db,
+        current_user=admin,
+    )
+    assert_true(lo_created.id is not None and lo_created.recorded_by == admin.id, "Create leftover record in DB")
+
+    # Leftover Read
+    lo_list = leftovers.list_leftovers(meal_id=created_meal.id, db=db, _=admin)
+    assert_true(len(lo_list) == 1 and lo_list[0].dish == "Paneer Biryani", "Read leftover records filtered by meal_id")
+
+    # Leftover Update
+    lo_updated = leftovers.update_leftover(
+        lo_created.id,
+        LeftoverUpdate(qty_left=2.5, notes="Adjusted after final count"),
+        db=db,
+        _=admin,
+    )
+    assert_true(lo_updated.qty_left == 2.5, "Update leftover record in DB")
+
+    # Leftover validation: qty_left > qty_cooked rejected
+    try:
+        leftovers.update_leftover(lo_created.id, LeftoverUpdate(qty_left=50.0), db=db, _=admin)
+        assert_true(False, "qty_left > qty_cooked should raise 422")
+    except HTTPException as e:
+        assert_true(e.status_code == 422, "Invalid leftover quantity update returns 422")
+
+    # Leftover Delete
+    leftovers.delete_leftover(lo_created.id, db=db, _=admin)
+    lo_after = leftovers.list_leftovers(meal_id=created_meal.id, db=db, _=admin)
+    assert_true(len(lo_after) == 0, "Delete leftover record from DB")
 
     print("\n==================================================")
     print(f"TEST RESULTS: {passed} PASSED, {failed} FAILED")

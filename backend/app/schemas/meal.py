@@ -24,6 +24,22 @@ class MealCreate(BaseModel):
         return cleaned
 
 
+class MealUpdate(BaseModel):
+    dishes: list[str] | None = Field(default=None, min_length=1)
+    portion_sizes: dict[str, str] | None = None
+    cutoff_time: datetime | None = None
+
+    @field_validator("dishes")
+    @classmethod
+    def validate_dishes(cls, v: list[str] | None) -> list[str] | None:
+        if v is None:
+            return None
+        cleaned = [d.strip() for d in v if d.strip()]
+        if not cleaned:
+            raise ValueError("Meal must contain at least one valid dish name")
+        return cleaned
+
+
 class MealOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
