@@ -1,5 +1,5 @@
 """Meal and menu routes: create/list meals (admin) and GET /api/meals/today for all users."""
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time, timedelta, timezone
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -16,6 +16,146 @@ from app.schemas.meal import MealCreate, MealOut, MealUpdate, MealWithCheckin
 router = APIRouter(prefix="/meals", tags=["meals"])
 admin_only = require_roles(Role.admin)
 
+# Rotating daily menus (indexed by weekday 0=Mon .. 6=Sun) so each day gets fresh meals.
+DAILY_MENU_ROTATION = [
+    {
+        MealType.breakfast: (
+            ["Idli (4 pcs)", "Medu Vada (1 pc)", "Sambar", "Coconut Chutney", "Filter Coffee"],
+            {"Idli (4 pcs)": "4 pcs", "Medu Vada (1 pc)": "1 pc", "Sambar": "0.15 L", "Filter Coffee": "0.10 L"},
+        ),
+        MealType.lunch: (
+            ["Steamed Basmati Rice", "South Indian Sambar", "Vegetable Kurma", "Curd / Buttermilk", "Appalam"],
+            {"Steamed Basmati Rice": "0.25 kg", "South Indian Sambar": "0.15 L", "Vegetable Kurma": "0.12 kg", "Curd / Buttermilk": "0.10 L"},
+        ),
+        MealType.dinner: (
+            ["Chapati (3 pcs)", "Paneer Butter Masala", "Jeera Rice", "Yellow Dal Tadka", "Gulab Jamun"],
+            {"Chapati (3 pcs)": "3 pcs", "Paneer Butter Masala": "0.15 kg", "Jeera Rice": "0.15 kg", "Yellow Dal Tadka": "0.12 L"},
+        ),
+    },
+    {
+        MealType.breakfast: (
+            ["Masala Dosa", "Tomato Chutney", "Sambar", "Boiled Egg / Sprouts", "Tea / Milk"],
+            {"Masala Dosa": "2 pcs", "Sambar": "0.15 L", "Tomato Chutney": "0.05 kg", "Tea / Milk": "0.15 L"},
+        ),
+        MealType.lunch: (
+            ["Jeera Rice", "Rajma Masala", "Aloo Gobi", "Cucumber Raita", "Salad"],
+            {"Jeera Rice": "0.25 kg", "Rajma Masala": "0.18 L", "Aloo Gobi": "0.12 kg", "Cucumber Raita": "0.10 L"},
+        ),
+        MealType.dinner: (
+            ["Phulka (3 pcs)", "Kadai Vegetable", "Steamed Rice", "Dal Fry", "Fruit Custard"],
+            {"Phulka (3 pcs)": "3 pcs", "Kadai Vegetable": "0.15 kg", "Steamed Rice": "0.15 kg", "Dal Fry": "0.12 L"},
+        ),
+    },
+    {
+        MealType.breakfast: (
+            ["Pongal", "Medu Vada", "Coconut Chutney", "Sambar", "Filter Coffee"],
+            {"Pongal": "0.25 kg", "Medu Vada": "1 pc", "Sambar": "0.15 L", "Filter Coffee": "0.10 L"},
+        ),
+        MealType.lunch: (
+            ["Veg Pulao", "Dal Makhani", "Bhindi Fry", "Boondi Raita", "Papad"],
+            {"Veg Pulao": "0.25 kg", "Dal Makhani": "0.15 L", "Bhindi Fry": "0.10 kg", "Boondi Raita": "0.10 L"},
+        ),
+        MealType.dinner: (
+            ["Chapati (3 pcs)", "Chana Masala", "Lemon Rice", "Rasam", "Payasam"],
+            {"Chapati (3 pcs)": "3 pcs", "Chana Masala": "0.16 kg", "Lemon Rice": "0.18 kg", "Rasam": "0.12 L"},
+        ),
+    },
+    {
+        MealType.breakfast: (
+            ["Poori (3 pcs)", "Potato Masala", "Rava Kesari", "Tea / Coffee"],
+            {"Poori (3 pcs)": "3 pcs", "Potato Masala": "0.15 kg", "Rava Kesari": "0.08 kg", "Tea / Coffee": "0.15 L"},
+        ),
+        MealType.lunch: (
+            ["Steamed Rice", "Drumstick Sambar", "Cabbage Poriyal", "Rasam", "Buttermilk"],
+            {"Steamed Rice": "0.25 kg", "Drumstick Sambar": "0.15 L", "Cabbage Poriyal": "0.12 kg", "Buttermilk": "0.15 L"},
+        ),
+        MealType.dinner: (
+            ["Parotta (2 pcs)", "Veg Salna", "Curd Rice", "Pickle", "Banana"],
+            {"Parotta (2 pcs)": "2 pcs", "Veg Salna": "0.18 L", "Curd Rice": "0.18 kg"},
+        ),
+    },
+    {
+        MealType.breakfast: (
+            ["Rava Upma", "Medu Vada", "Peanut Chutney", "Sambar", "Coffee"],
+            {"Rava Upma": "0.22 kg", "Medu Vada": "1 pc", "Sambar": "0.15 L", "Coffee": "0.10 L"},
+        ),
+        MealType.lunch: (
+            ["Vegetable Biryani", "Onion Raita", "Brinjal Gravy", "Boiled Egg / Paneer", "Sweet"],
+            {"Vegetable Biryani": "0.30 kg", "Onion Raita": "0.10 L", "Brinjal Gravy": "0.12 L"},
+        ),
+        MealType.dinner: (
+            ["Chapati (3 pcs)", "Matar Paneer", "Steamed Rice", "Moong Dal", "Ice Cream"],
+            {"Chapati (3 pcs)": "3 pcs", "Matar Paneer": "0.15 kg", "Steamed Rice": "0.15 kg", "Moong Dal": "0.12 L"},
+        ),
+    },
+    {
+        MealType.breakfast: (
+            ["Aloo Paratha (2 pcs)", "Curd", "Pickle", "Mint Chutney", "Masala Chai"],
+            {"Aloo Paratha (2 pcs)": "2 pcs", "Curd": "0.12 kg", "Masala Chai": "0.15 L"},
+        ),
+        MealType.lunch: (
+            ["Steamed Rice", "Karakozhambu", "Beans Poriyal", "Dal Tadka", "Curd"],
+            {"Steamed Rice": "0.25 kg", "Karakozhambu": "0.15 L", "Beans Poriyal": "0.10 kg", "Curd": "0.10 L"},
+        ),
+        MealType.dinner: (
+            ["Ghee Dosa (2 pcs)", "Vegetable Kurma", "Tomato Chutney", "Badam Milk"],
+            {"Ghee Dosa (2 pcs)": "2 pcs", "Vegetable Kurma": "0.15 L", "Badam Milk": "0.15 L"},
+        ),
+    },
+    {
+        MealType.breakfast: (
+            ["Chole Bhature", "Onion Salad", "Sweet Lassi", "Filter Coffee"],
+            {"Chole Bhature": "2 pcs", "Sweet Lassi": "0.20 L", "Filter Coffee": "0.10 L"},
+        ),
+        MealType.lunch: (
+            ["Special Veg Thali", "Paneer Tikka Masala", "Jeera Pulao", "Dal", "Gulab Jamun"],
+            {"Jeera Pulao": "0.25 kg", "Paneer Tikka Masala": "0.15 kg", "Dal": "0.12 L"},
+        ),
+        MealType.dinner: (
+            ["Chapati (3 pcs)", "Mixed Veg Curry", "Steamed Rice", "Rasam", "Fruit Bowl"],
+            {"Chapati (3 pcs)": "3 pcs", "Mixed Veg Curry": "0.15 kg", "Steamed Rice": "0.15 kg"},
+        ),
+    },
+]
+
+DEFAULT_CUTOFF_HOURS = {
+    MealType.breakfast: time(9, 0),
+    MealType.lunch: time(13, 0),
+    MealType.dinner: time(20, 30),
+}
+
+
+def ensure_daily_meals(db: Session, target_date: date) -> list[Meal]:
+    """Ensure breakfast, lunch, and dinner exist for target_date."""
+    existing = list(db.scalars(select(Meal).where(Meal.date == target_date)))
+    existing_types = {m.meal_type for m in existing}
+    local_tz = datetime.now().astimezone().tzinfo or timezone.utc
+    day_menu = DAILY_MENU_ROTATION[target_date.weekday() % len(DAILY_MENU_ROTATION)]
+
+    created = False
+    for m_type in (MealType.breakfast, MealType.lunch, MealType.dinner):
+        if m_type in existing_types:
+            continue
+        dishes, portions = day_menu[m_type]
+        local_cutoff = datetime.combine(target_date, DEFAULT_CUTOFF_HOURS[m_type], tzinfo=local_tz)
+        meal = Meal(
+            date=target_date,
+            meal_type=m_type,
+            menu_items=json.dumps(dishes),
+            portion_sizes=json.dumps(portions),
+            cutoff_time=local_cutoff.astimezone(timezone.utc),
+        )
+        db.add(meal)
+        created = True
+
+    if created:
+        db.commit()
+        existing = list(db.scalars(select(Meal).where(Meal.date == target_date)))
+
+    order = {MealType.breakfast: 0, MealType.lunch: 1, MealType.dinner: 2}
+    existing.sort(key=lambda m: order.get(m.meal_type, 99))
+    return existing
+
 
 @router.get("", response_model=list[MealOut])
 def list_meals(db: Session = Depends(get_db), _: User = Depends(get_current_user)) -> list[MealOut]:
@@ -29,13 +169,9 @@ def get_today_meals(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> list[MealWithCheckin]:
-    """Get today's meals with the current user's check-in status (if any)."""
-    today = datetime.now(timezone.utc).date()
-    # Also fetch upcoming meals for today or near future
-    meals = list(db.scalars(select(Meal).where(Meal.date >= today).order_by(Meal.date.asc(), Meal.cutoff_time.asc())))
-    if not meals:
-        # Fallback to today's date exact or recent
-        meals = list(db.scalars(select(Meal).order_by(Meal.date.desc(), Meal.id.desc()).limit(5)))
+    """Get today's meals (auto-generating today's daily menu if missing) with the user's check-in status."""
+    today = datetime.now().astimezone().date()
+    meals = ensure_daily_meals(db, today)
 
     # Fetch user's checkins for these meals
     meal_ids = [m.id for m in meals]

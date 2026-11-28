@@ -1,6 +1,78 @@
 @import "tailwindcss";
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   background-color: #f7faf9;
+}
+
+.font-display {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.mm-plate-spin {
+  animation: mm-plate-spin 72s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes mm-plate-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.dashboard-ambient::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(232, 189, 123, 0.12) 0.7px, transparent 0.7px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+}
+
+.dashboard-ambient__glow {
+  animation: ambient-drift 18s ease-in-out infinite;
+  will-change: transform;
+}
+
+.dashboard-ambient__glow--green {
+  animation-delay: -9s;
+  animation-duration: 22s;
+}
+
+@keyframes ambient-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-18px, 14px, 0) scale(1.04);
+  }
+}
+
+.food-float {
+  animation: food-float 6s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes food-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-4deg);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0) rotate(3deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mm-plate-spin,
+  .food-float,
+  .dashboard-ambient__glow {
+    animation: none;
+    will-change: auto;
+  }
 }

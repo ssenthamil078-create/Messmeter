@@ -9,7 +9,16 @@ from app.config import settings
 
 db_url = os.getenv("DATABASE_URL") or settings.database_url
 if db_url.startswith("postgresql://"):
-    db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+elif db_url.startswith("postgresql+psycopg2://"):
+    try:
+        import psycopg2  # noqa: F401
+    except ImportError:
+        try:
+            import psycopg  # noqa: F401
+            db_url = db_url.replace("postgresql+psycopg2://", "postgresql+psycopg://", 1)
+        except ImportError:
+            pass
 elif db_url.startswith("postgresql+psycopg://"):
     try:
         import psycopg  # noqa: F401

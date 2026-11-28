@@ -8,6 +8,7 @@ const links = [
   { to: '/student', label: 'Student Check-in', roles: ['student', 'admin'] },
   { to: '/kitchen', label: 'Kitchen', roles: ['staff', 'admin'] },
   { to: '/admin', label: 'Admin', roles: ['admin'] },
+  { to: '/analytics', label: 'Analytics', roles: ['admin'] },
   { to: '/reports', label: 'Reports' },
 ]
 

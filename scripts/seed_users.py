@@ -1,4 +1,4 @@
-"""Create demo accounts and sample scheduled meals so the app can be tried straight away.
+"""Create sample accounts and scheduled meals so the app can be tried straight away.
 
 Usage (from the repo root, with the backend venv active):
     python scripts/seed_users.py
@@ -21,10 +21,10 @@ from app.models.meal import Meal, MealType  # noqa: E402
 from app.models.user import Role, User  # noqa: E402
 from app.security import hash_password  # noqa: E402
 
-DEMO_USERS = [
+SAMPLE_USERS = [
     ("Mess Admin", "admin@example.com", Role.admin),
     ("Kitchen Staff", "staff@example.com", Role.staff),
-    ("Demo Student", "student@example.com", Role.student),
+    ("Hostel Student", "student@example.com", Role.student),
     ("Asha Sharma", "asha@example.com", Role.student),
     ("Rahul Verma", "rahul@example.com", Role.student),
 ]
@@ -80,7 +80,7 @@ def main() -> None:
     Base.metadata.create_all(bind=engine)
     shared = os.environ.get("SEED_PASSWORD", "demo12345")
     with SessionLocal() as db:
-        for name, email, role in DEMO_USERS:
+        for name, email, role in SAMPLE_USERS:
             if db.query(User).filter(User.email == email).first():
                 print(f"skip   {email} (already exists)")
                 continue
